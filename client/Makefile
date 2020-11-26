@@ -5,7 +5,7 @@ DEBUG = -g
 CC = gcc
 
 all: client
-	@echo "Ejecute: ./client [servidor [puerto]]"
+	@echo "Ejecute: ./client "
 
 client: $(SRCS)
 	$(CC) -o client $(SRCS)

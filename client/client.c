@@ -57,7 +57,7 @@ int extern errno;
 int socketID;
 int options;
 
-int main(int argc, char *argv[]) {
+int main() {
     int state;
     int option;
     int start;
@@ -69,19 +69,6 @@ int main(int argc, char *argv[]) {
     struct sockaddr_in server;
     fd_set set;
 
-    switch (argc) {
-    	case 3:
-    		port = atoi(argv[2]);
-    	case 2:
-    		snprintf(host,MAXMENS,"%s",argv[1]);
-    		break;
-    	case 1:
-    		break;
-    	default:
-    		printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
-    		exit(1);
-    }
-
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
 
@@ -89,7 +76,6 @@ int main(int argc, char *argv[]) {
         memcpy(&server.sin_addr, ser->h_addr, ser->h_length);
      } else {
     	printf("No se encontro %s (%s)\n",host,strerror(errno));
-    	printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
     	exit(1);
      }
 
@@ -102,7 +88,6 @@ int main(int argc, char *argv[]) {
 
      if (connect(socketID, (struct sockaddr *) &server, sizeof(server)) != 0) {
         printf("Servidor no disponible en %s:%d (%s)\n",host,port,strerror(errno));
-        printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
         exit(1);
      }
 
