@@ -28,7 +28,7 @@ void announce_leave(int playerSocketID);
 
 void send_card(int player_id, int card_number);
 
-void evaluate_end_of_game(int loser);
+void evaluate_end_of_game(int loser, int current_card);
 
 int socketID;
 int playerSocketID;
@@ -36,7 +36,7 @@ fd_set set;
 fd_set copiaset;
 extern int errno;
 
-int main() {
+int main(int argc, char *argv[]) {
 	int n;
     int pid;
     int port = 2222;
@@ -58,18 +58,32 @@ int main() {
 
     signal(SIGCHLD, endgame);
 
+    if (argc == 2) {
+
+		port = atoi(argv[1]);
+
+		if (port == 0) {
+
+			printf("Ejecute %s [puerto]\n",argv[0]);
+
+			exit (1);
+
+		}
+
+    }
+
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
     server.sin_addr.s_addr = INADDR_ANY;
 
-    socketID = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    socketID = socket(PF_INET, SOCK_STREAM, 0);
 
     if (bind(socketID, (struct sockaddr *) &server, sizeof(server)) < 0) {
 		perror("Error en bind");
 		exit(-1);
     }
 
-    if ( listen(socketID, 100) < 0 ) {
+    if (listen(socketID, 3) < 0 ) {
 		perror("Error en listen");
 		exit(-1);
     }
@@ -87,10 +101,9 @@ int main() {
 		while (!start) {
 			copiaset = set;
 
-			if ( (select(FD_SETSIZE, &copiaset, NULL, NULL, NULL) < 0) && (errno!=EINTR) ) {
+			if ((select(FD_SETSIZE, &copiaset, NULL, NULL, NULL) < 0) && (errno!=EINTR) ) {
 	          	perror("Error en select");
 				exit(-1);
-
 		    }
 
 		    if (FD_ISSET(socketID, &copiaset)) {
@@ -254,15 +267,23 @@ int main() {
 
 			    int most_voted_id;
 			    most_voted_id = get_most_voted();
-			    add_card(most_voted_id);
-			    get_name(most_voted_id, name);
+
+			    if (most_voted_id > 0) {
+			        add_card(most_voted_id);
+			        get_name(most_voted_id, name);
+			    }
 
 			    // Anuncio ganador de tarjeta
 
 			    for (playerSocketID = 0; playerSocketID < FD_SETSIZE; playerSocketID++) {
 
 			    	if (FD_ISSET(playerSocketID, &set)) {
-						snprintf(message_sent, MAXMENS, "%s", name);
+			    	    if (most_voted_id > 0) {
+			    	        snprintf(message_sent, MAXMENS, "WINN %s", name);
+			    	    } else {
+			    	        snprintf(message_sent, MAXMENS, "TIED");
+			    	    }
+
 						send_message(playerSocketID, message_sent);
 			    	}
 			    }
@@ -272,10 +293,15 @@ int main() {
 				// Evaluo fin de juego
 
 				loser = get_loser();
-				evaluate_end_of_game(loser);
+				evaluate_end_of_game(loser, current_card);
 		    }
 
-		    get_name(loser, name);
+            if (loser < 0) {
+                int most_cards = get_most_cards();
+                get_name(most_cards, name);
+            } else {
+                get_name(loser, name);
+            }
 
 		    for (playerSocketID = 0; playerSocketID < FD_SETSIZE; playerSocketID++) {
 
@@ -287,9 +313,23 @@ int main() {
 	    	}
 
 		    exit(0);
+		} else {
+		    for (playerSocketID = 0; playerSocketID < FD_SETSIZE; playerSocketID++) {
+                if (FD_ISSET(playerSocketID, &set)) {
+                    if (socketID != playerSocketID) {
+                        if (get_ready(playerSocketID)) {
+                            delete_player(playerSocketID);
+                            FD_CLR(playerSocketID, &set);
+                            close(playerSocketID);
+                        }
+                    }
+                }
+            }
 		}
     }
 
+    close(socketID);
+    exit(0);
 }
 
 void endgame(int sig) {
@@ -453,14 +493,14 @@ void send_card(int player_id, int card_number) {
     }
 }
 
-void evaluate_end_of_game(int loser) {
+void evaluate_end_of_game(int loser, int current_card) {
 	char message_sent[MAXMENS];
 
 	for (playerSocketID = 0; playerSocketID < FD_SETSIZE; playerSocketID++) {
 
     	if (FD_ISSET(playerSocketID, &set)) {
 
-			if (loser < 0) {
+			if (loser < 0 && current_card < 50) {
 				snprintf(message_sent, MAXMENS, "NEXT");
 			} else {
 				snprintf(message_sent, MAXMENS, "DONE");

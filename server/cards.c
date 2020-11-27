@@ -7,9 +7,9 @@
 
 // Variables
 
-const int deck_size = 20;
+const int deck_size = 50;
 
-int cards[20];
+int cards[50];
 
 // Funciones
 

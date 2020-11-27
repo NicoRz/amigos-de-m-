@@ -103,7 +103,7 @@ void add_vote(int id) {
     }
 }
 
-void reset_votes() {
+void reset_votes(void) {
     int id;
     id = 1;
 
@@ -117,7 +117,7 @@ void add_card(int id) {
     players[id].cards_obtained++;
 }
 
-int get_most_voted() {
+int get_most_voted(void) {
     int id;
     int most_voted;
     int votes;
@@ -129,6 +129,10 @@ int get_most_voted() {
         if (players[id].votes > votes) {
             votes = players[id].votes;
             most_voted = id;
+        } else {
+            if (players[id].votes == votes) {
+                most_voted = -1;
+            }
         }
 
         id++;
@@ -137,7 +141,27 @@ int get_most_voted() {
     return (most_voted);
 }
 
-int get_loser() {
+int get_most_cards(void) {
+    int id;
+    int most_cards;
+    int cards;
+
+    id = 1;
+    cards = 0;
+
+    while (id < FD_SETSIZE) {
+        if (players[id].cards_obtained > cards) {
+            cards = players[id].cards_obtained;
+            most_cards = id;
+        }
+
+        id++;
+    }
+
+    return (most_cards);
+}
+
+int get_loser(void) {
     int loser;
     int id;
 

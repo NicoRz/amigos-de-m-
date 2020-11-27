@@ -57,7 +57,7 @@ int extern errno;
 int socketID;
 int options;
 
-int main() {
+int main(int argc, char *argv[]) {
     int state;
     int option;
     int start;
@@ -69,6 +69,19 @@ int main() {
     struct sockaddr_in server;
     fd_set set;
 
+    switch (argc) {
+    	case 3:
+    		port = atoi(argv[2]);
+    	case 2:
+    		snprintf(host,MAXMENS,"%s",argv[1]);
+    		break;
+    	case 1:
+    		break;
+    	default:
+    		printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
+    		exit(1);
+    }
+
     server.sin_family = AF_INET;
     server.sin_port = htons(port);
 
@@ -76,6 +89,7 @@ int main() {
         memcpy(&server.sin_addr, ser->h_addr, ser->h_length);
      } else {
     	printf("No se encontro %s (%s)\n",host,strerror(errno));
+    	printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
     	exit(1);
      }
 
@@ -88,6 +102,7 @@ int main() {
 
      if (connect(socketID, (struct sockaddr *) &server, sizeof(server)) != 0) {
         printf("Servidor no disponible en %s:%d (%s)\n",host,port,strerror(errno));
+        printf("Ejecute: %s [servidor [puerto]]\n", argv[0]);
         exit(1);
      }
 
@@ -419,10 +434,27 @@ void send_answer(void) {
 }
 
 void show_result(void) {
+    char message[MAXMENS];
     char winner[MAXMENS];
-    read_message(socketID, winner);
-    printf("\n### RESULTADO DE LA TARJETA ###\n\n");
-    printf("\nEl jugador elegido por todos es: %s\n", winner);
+    char message_id[5];
+
+    read_message(socketID, message);
+
+    memcpy(message_id, message, 4);
+    message_id[4] = '\0';
+
+    memcpy(winner, message + 5, (strlen(message) - 4));
+    winner[(strlen(message) - 4)] = '\0';
+
+    printf("\n##### RESULTADO DE LA TARJETA #####\n");
+
+    if (strcmp(message_id, "WINN") == 0) {
+        printf("\nEl jugador mas votado es: %s\n", winner);
+    }
+
+    if (strcmp(message_id, "TIED") == 0) {
+        printf("\nHubo un empate, por lo que nadie recibe la tarjeta\n");
+    }
 }
 
 void show_loser(void) {

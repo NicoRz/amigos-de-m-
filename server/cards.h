@@ -4,7 +4,7 @@
 
 // Variables
 
-int cards[20];
+int cards[50];
 
 // Funciones
 

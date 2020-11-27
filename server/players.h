@@ -38,10 +38,12 @@ int player_copy(char *name);
 
 void add_vote(int id);
 
-void reset_votes();
+void reset_votes(void);
 
 void add_card(int id);
 
-int get_most_voted();
+int get_most_voted(void);
 
-int get_loser();
+int get_loser(void);
+
+int get_most_cards(void);
