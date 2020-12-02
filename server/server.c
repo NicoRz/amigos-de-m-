@@ -404,7 +404,7 @@ void show_players(void) {
 		}
     }
 
-    snprintf(message_sent, MAXMENS, "LIST FIN");
+    snprintf(message_sent, MAXMENS, "LIST END");
     send_message(playerSocketID, message_sent);
 }
 

@@ -333,7 +333,7 @@ void show_players(void) {
     while (!listfin) {
 	    read_message(socketID, message);
 
-        if (strcmp(message, "LIST FIN") == 0) {
+        if (strcmp(message, "LIST END") == 0) {
             printf("\n");
             listfin = 1;
         } else {
